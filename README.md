@@ -2,7 +2,7 @@
 
 # ckanext-advanced_search
 
-**TODO:** Put a description of your extension here:  What does it do? What features does it have? Consider including some screenshots or embedding a video!
+**TODO:** This extension is title and tags based it also have auto-suggestion feature, when search by title it will return you only one dataset if you search by tags you will get all dataset based on that tag.
 
 
 ## Requirements
@@ -18,8 +18,8 @@ Compatibility with core CKAN versions:
 | --------------- | ------------- |
 | 2.6 and earlier | not tested    |
 | 2.7             | not tested    |
-| 2.8             | not tested    |
-| 2.9             | not tested    |
+| 2.8             | yes    |
+| 2.9             | yes   |
 
 Suggested values:
 
