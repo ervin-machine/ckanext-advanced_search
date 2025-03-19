@@ -1,0 +1,151 @@
+<!-- hello_plugin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CKAN Advanced Search</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let searchInput = document.getElementById("field-giant-search");
+            let suggestionsBox = document.createElement("div");
+            suggestionsBox.setAttribute("id", "search-suggestions");
+            suggestionsBox.style.position = "absolute";
+            suggestionsBox.style.border = "1px solid #ddd";
+            suggestionsBox.style.backgroundColor = "#fff";
+            suggestionsBox.style.zIndex = "1000";
+            searchInput.parentNode.appendChild(suggestionsBox);
+
+            let typingTimer;  // Timer variable for delay
+            const typingDelay = 500;  // Delay before fetching (in ms)
+
+            searchInput.addEventListener("input", function() {
+                let query = searchInput.value.trim().toLowerCase();  // Trim and lowercase input
+            
+                if (query.length < 2) {
+                    suggestionsBox.innerHTML = "";
+                    return;
+                }
+            
+                clearTimeout(typingTimer);  // Clear previous timer
+            
+                typingTimer = setTimeout(function() {
+                    fetch(`/myapi/suggestions?q=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsBox.innerHTML = "";
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                // Use .includes() instead of .startsWith() for fuzzy search
+                                const filteredSuggestions = data.filter(suggestion =>
+                                    suggestion.toLowerCase().includes(query)
+                                );
+                            
+                                if (filteredSuggestions.length > 0) {
+                                    filteredSuggestions.forEach(suggestion => {
+                                        let suggestionItem = document.createElement("div");
+                                        suggestionItem.innerText = suggestion;
+                                        suggestionItem.style.padding = "5px";
+                                        suggestionItem.style.cursor = "pointer";
+                                        suggestionItem.addEventListener("click", function() {
+                                            searchInput.value = suggestion;
+                                            suggestionsBox.innerHTML = "";
+                                            fetchDataset(suggestion);  // Fetch dataset when clicked
+                                        });
+                                        suggestionsBox.appendChild(suggestionItem);
+                                    });
+                                } else {
+                                    suggestionsBox.innerHTML = "<div>No suggestions found</div>";
+                                }
+                            } else {
+                                suggestionsBox.innerHTML = "<div>No suggestions found</div>";
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error fetching suggestions:", error);
+                            suggestionsBox.innerHTML = "<div>Error fetching suggestions</div>";
+                        });
+                }, typingDelay);  // Apply delay before fetching
+            });
+
+
+
+        });Example
+        
+        function fetchDataset(datasetInput) {
+            // Check if the input contains spaces or multiple words (considering it a name)
+            let isTag = datasetInput.trim().startsWith("#") || datasetInput.trim().split(" ").length === 1;
+        
+            let url = "/myapi/dataset";
+            const params = new URLSearchParams();
+        
+            if (isTag) {
+                // Treat as tag if it has no spaces or starts with #
+                params.append('tags', datasetInput);  // Set tags
+            } else {
+                // Treat as name if it contains spaces or is a long string
+                params.append('name', datasetInput);  // Set name
+            }
+            
+            // Append the query parameters to the URL
+            url += `?${params.toString()}`;
+        
+            // Call the API to fetch datasets
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        displayDatasets(data);  // Show dataset details if data exists
+                    } else if (data.error) {
+                        alert(data.error);  // Handle errors if the response contains error
+                    } else {
+                        alert("No datasets found.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching dataset:", error);
+                    alert("Error fetching dataset. Please try again later.");
+                });
+        }
+        
+        function displayDatasets(datasets) {
+            // This function will display a list of datasets
+            console.log("Datasets found:", datasets);
+        
+            // Get the div element where the dataset details will be displayed
+            let datasetList = document.getElementById("dataset-list");
+        
+            // Clear the previous content (optional, to ensure fresh content)
+            datasetList.innerHTML = '';
+        
+            // Create a list of HTML elements for each dataset
+            datasets.forEach(dataset => {
+                const datasetItem = `
+                    <div class="dataset-item">
+                        <h3><a href="${dataset.url}" target="_blank">${dataset.title}</a></h3>
+                        <p><strong>Name:</strong> ${dataset.name}</p>
+                        <p><strong>ID:</strong> ${dataset.id}</p>
+                        <p><strong>Author:</strong> ${dataset.author || 'N/A'}</p>
+                        <p><strong>License Title:</strong> ${dataset.license_title || 'No license'}</p>
+                        <p><strong>Created:</strong> ${dataset.metadata_created}</p>
+                        <p><strong>Tags:</strong> ${dataset.tags ? dataset.tags.map(tag => tag.name).join(', ') : 'No tags'}</p>
+                        <p><strong>Organization:</strong> ${dataset.organization ? dataset.organization.name : 'No organization'}</p>
+                    </div>
+                    <hr>
+                `;
+                
+                // Append the dataset item to the list
+                datasetList.innerHTML += datasetItem;
+            });
+        }
+        </script>
+          
+</head>
+<body>
+    <h1>Welcome to the Advanced Search extension</h1>
+    <div>
+        <input type="text" id="field-giant-search" placeholder="Search for datasets by title or tags...">
+    </div>
+    
+    <div id="dataset-list"></div>
+</body>
+</html>

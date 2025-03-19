@@ -1,0 +1,14 @@
+# example_extension-js:
+#   filter: rjsmin
+#   output: ckanext-advanced_search/%(version)s-example_extension.js
+#   contents:
+#     - js/example_extension.js
+#   extra:
+#     preload:
+#       - base/main
+
+# example_extension-css:
+#   filter: cssrewrite
+#   output: ckanext-advanced_search/%(version)s-example_extension.css
+#   contents:
+#     - css/example_extension.css
